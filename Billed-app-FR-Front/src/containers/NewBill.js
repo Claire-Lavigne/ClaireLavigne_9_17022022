@@ -53,43 +53,34 @@ export default class NewBill {
         })
         .catch((error) => console.error(error));
     } else {
-      // display alert and empty input
-      alert("Image au format jpg, jpeg ou png uniquement");
+      // empty input and display alert
       fileInput.value = "";
+      alert("Image au format jpg, jpeg ou png uniquement");
     }
   };
   handleSubmit = (e) => {
     e.preventDefault();
-    if (
-      this.fileExtension === "jpg" ||
-      this.fileExtension === "jpeg" ||
-      this.fileExtension === "png"
-    ) {
-      const email = JSON.parse(localStorage.getItem("user")).email;
-      const bill = {
-        email,
-        type: e.target.querySelector(`select[data-testid="expense-type"]`)
-          .value,
-        name: e.target.querySelector(`input[data-testid="expense-name"]`).value,
-        amount: parseInt(
-          e.target.querySelector(`input[data-testid="amount"]`).value
-        ),
-        date: e.target.querySelector(`input[data-testid="datepicker"]`).value,
-        vat: e.target.querySelector(`input[data-testid="vat"]`).value,
-        pct:
-          parseInt(e.target.querySelector(`input[data-testid="pct"]`).value) ||
-          20,
-        commentary: e.target.querySelector(`textarea[data-testid="commentary"]`)
-          .value,
-        fileName: this.fileName,
-        status: "pending",
-      };
-      this.updateBill(bill);
-      this.onNavigate(ROUTES_PATH["Bills"]);
-    } else {
-      // don't submit data
-      return false;
-    }
+
+    const email = JSON.parse(localStorage.getItem("user")).email;
+    const bill = {
+      email,
+      type: e.target.querySelector(`select[data-testid="expense-type"]`).value,
+      name: e.target.querySelector(`input[data-testid="expense-name"]`).value,
+      amount: parseInt(
+        e.target.querySelector(`input[data-testid="amount"]`).value
+      ),
+      date: e.target.querySelector(`input[data-testid="datepicker"]`).value,
+      vat: e.target.querySelector(`input[data-testid="vat"]`).value,
+      pct:
+        parseInt(e.target.querySelector(`input[data-testid="pct"]`).value) ||
+        20,
+      commentary: e.target.querySelector(`textarea[data-testid="commentary"]`)
+        .value,
+      fileName: this.fileName,
+      status: "pending",
+    };
+    this.updateBill(bill);
+    this.onNavigate(ROUTES_PATH["Bills"]);
   };
 
   // not need to cover this function by tests
