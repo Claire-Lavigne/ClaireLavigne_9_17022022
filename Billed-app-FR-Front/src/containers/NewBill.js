@@ -6,31 +6,31 @@ export default class NewBill {
     this.document = document;
     this.onNavigate = onNavigate;
     this.store = store;
-
     this.fileName = "";
-    this.fileExtension = "";
     this.billId = "";
-    const file = this.document.querySelector(`input[data-testid="file"]`);
+    const fileInput = this.document.querySelector(`input[data-testid="file"]`);
+
     const formNewBill = this.document.querySelector(
       `form[data-testid="form-new-bill"]`
     );
 
-    file.addEventListener("change", this.handleChangeFile);
+    fileInput.addEventListener("change", this.handleChangeFile);
+
     formNewBill.addEventListener("submit", this.handleSubmit);
 
     new Logout({ document, localStorage, onNavigate });
   }
   handleChangeFile = (e) => {
     e.preventDefault();
-    const fileInput = this.document.querySelector(`input[data-testid="file"]`);
+    const fileInput = e.target;
     const file = fileInput.files[0];
     const fileName = file.name;
-    const fileExtension = fileName.split(".").pop().toLowerCase();
+    const fileType = file.type;
 
     if (
-      fileExtension === "jpg" ||
-      fileExtension === "jpeg" ||
-      fileExtension === "png"
+      fileType === "image/jpg" ||
+      fileType === "image/jpeg" ||
+      fileType === "image/png"
     ) {
       const formData = new FormData();
       const email = JSON.parse(localStorage.getItem("user")).email;
@@ -49,7 +49,6 @@ export default class NewBill {
         .then(({ key }) => {
           this.billId = key;
           this.fileName = fileName;
-          this.fileExtension = fileExtension;
         })
         .catch((error) => console.error(error));
     } else {

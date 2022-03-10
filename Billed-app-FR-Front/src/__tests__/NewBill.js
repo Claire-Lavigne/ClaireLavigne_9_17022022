@@ -3,84 +3,91 @@
  */
 
 import { fireEvent, screen } from "@testing-library/dom";
-import { ROUTES_PATH } from "../constants/routes.js";
 import NewBillUI from "../views/NewBillUI.js";
 import NewBill from "../containers/NewBill.js";
-import router from "../app/Router.js";
 import { localStorageMock } from "../__mocks__/localStorage.js";
-import userEvent from "@testing-library/user-event";
+import { ROUTES } from "../constants/routes";
 
 describe("Given I am connected as an employee", () => {
   describe("When I am on NewBill Page", () => {
-    describe("When I charge a file with wrong format", () => {
-      test("Then, it should display an error and empty the input", () => {
-        const onNavigate = (pathname) => {
-          document.body.innerHTML = ROUTES({ pathname });
-        };
+    document.body.innerHTML = NewBillUI();
 
-        Object.defineProperty(window, "localStorage", {
-          value: localStorageMock,
-        });
+    // spy window alert
+    const alertMock = jest.spyOn(window, "alert").mockImplementation(() => {});
 
-        window.localStorage.setItem(
-          "user",
-          JSON.stringify({
-            type: "Employee",
-          })
-        );
+    const onNavigate = (pathname) => {
+      document.body.innerHTML = ROUTES({ pathname });
+    };
 
-        const containerNewBill = new NewBill({
-          document,
-          onNavigate,
-          store: null,
-          localStorage: window.localStorage,
-        });
+    Object.defineProperty(window, "localStorage", { value: localStorageMock });
+    window.localStorage.setItem(
+      "user",
+      JSON.stringify({
+        type: "Employee",
+        email: "employee@test.tld",
+      })
+    );
 
-        document.body.innerHTML = NewBillUI();
+    const newBill = new NewBill({
+      document,
+      onNavigate,
+      store: null,
+      localStorage: window.localStorage,
+    });
 
-        // A shortcut to elt.querySelector(`[data-testid="file"]`)
-        //const file = screen.getByTestId("file");
-        // add event on fileInput
-        const file = containerNewBill.file;
-        const handleChangeFile = jest.fn((e) => {
-          containerNewBill.handleChangeFile(e);
-        });
-        file.addEventListener("change", handleChangeFile);
-        // spy window alert
-        const alertMock = jest.spyOn(window, "alert").mockImplementation();
+    describe("When I charge a file", () => {
+      // A shortcut to elt.querySelector(`[data-testid="file"]`)
+      const fileInput = screen.getByTestId("file");
+
+      // add event on fileInput
+      const handleChangeFile = jest.fn(newBill.handleChangeFile);
+      fileInput.addEventListener("change", handleChangeFile);
+
+      test("Then, if it is the wrong format, it should display an error and empty the input", () => {
         // simulate change
-        fireEvent.change(fileInput, [new File(["test"], "test.txt")]);
-        //userEvent.upload(fileInput, new File(["test"], "test.png"));
+        fireEvent.change(fileInput, { target: { files: ["test.txt"] } });
+        expect(fileInput.files[0]).toBe("test.txt");
         // check if file input is empty +  if window alert was called
-        expect(file.value).toBe("");
-        expect(alertMock).toHaveBeenCalledTimes(1);
+        expect(fileInput.value).toBe("");
+        expect(alertMock).toHaveBeenCalled();
       });
-    });
-    describe("When I charge a file in the correct format", () => {
-      test("Then, it should upload the file", () => {
-        const html = NewBillUI();
-        document.body.innerHTML = html;
-        const fileInput = screen.getByTestId("file");
-        fireEvent.change(fileInput, { target: { files: ["file.png"] } });
-        expect(fileInput.files[0]).toBe("file.png");
-      });
-    });
-    describe("When I submit the form and compulsory fields are empty", () => {
-      test("It should display an error to complete the fields and do not send data", () => {
-        const form = screen.getByTestId("form-new-bill");
-        const handleSubmit = jest.fn((e) => e.preventDefault());
 
-        form.addEventListener("submit", handleSubmit);
-        fireEvent.submit(form);
+      test("Then, if it is the right format, it should upload the file", () => {
+        fireEvent.change(fileInput, { target: { files: ["test.png"] } });
+        expect(fileInput.files[0]).toBe("test.png");
       });
     });
     describe("When I submit the form and fields are completed correctly", () => {
-      test("It should send data", () => {
-        const form = screen.getByTestId("form-new-bill");
-        const handleSubmit = jest.fn((e) => e.preventDefault());
+      const type = screen.getByTestId("expense-type");
+      const name = screen.getByTestId("expense-name");
+      const amount = screen.getByTestId("amount");
+      const date = screen.getByTestId("datepicker");
+      const vat = screen.getByTestId("vat");
+      const pct = screen.getByTestId("pct");
+      const commentary = screen.getByTestId("commentary");
+      const fileInput = screen.getByTestId("file");
+      const form = screen.getByTestId("form-new-bill");
 
-        form.addEventListener("submit", handleSubmit);
+      const handleChangeFile = jest.fn(newBill.handleChangeFile);
+      fileInput.addEventListener("change", handleChangeFile);
+
+      const handleSubmit = jest.fn(newBill.handleSubmit);
+      form.addEventListener("submit", handleSubmit);
+
+      test("It should update the bill and navigate to the Bills Dashboard", () => {
+        // complete inputs
+        fireEvent.change(type, { target: { value: "Transport" } });
+        fireEvent.click(name, { target: { value: "Name" } });
+        fireEvent.click(amount, { target: { value: "350" } });
+        fireEvent.change(date, { target: { value: "2020-05-24" } });
+        fireEvent.click(vat, { target: { value: "" } });
+        fireEvent.click(pct, { target: { value: "20" } });
+        fireEvent.click(commentary, { target: { value: "" } });
+        fireEvent.change(fileInput, { target: { files: ["test.png"] } });
+
+        // submit form
         fireEvent.submit(form);
+        expect(handleSubmit).toHaveBeenCalled();
       });
     });
   });
