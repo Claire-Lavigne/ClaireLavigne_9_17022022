@@ -2,6 +2,7 @@
  * @jest-environment jsdom
  */
 
+import mockStore from "../__mocks__/store";
 import { fireEvent, screen } from "@testing-library/dom";
 import NewBillUI from "../views/NewBillUI.js";
 import NewBill from "../containers/NewBill.js";
@@ -28,14 +29,14 @@ describe("Given I am connected as an employee", () => {
       })
     );
 
-    const newBill = new NewBill({
-      document,
-      onNavigate,
-      store: null,
-      localStorage: window.localStorage,
-    });
-
     describe("When I charge a file", () => {
+      const newBill = new NewBill({
+        document,
+        onNavigate,
+        store: mockStore,
+        localStorage: window.localStorage,
+      });
+
       // A shortcut to elt.querySelector(`[data-testid="file"]`)
       const fileInput = screen.getByTestId("file");
 
@@ -43,51 +44,53 @@ describe("Given I am connected as an employee", () => {
       const handleChangeFile = jest.fn(newBill.handleChangeFile);
       fileInput.addEventListener("change", handleChangeFile);
 
-      test("Then, if it is the wrong format, it should display an error and empty the input", () => {
+      test("Then, if it is the wrong format, it should display an error and empty the input", async () => {
         // simulate change
-        fireEvent.change(fileInput, { target: { files: ["test.txt"] } });
-        expect(fileInput.files[0]).toBe("test.txt");
+        fireEvent.change(fileInput, {
+          target: {
+            files: [new File(["test"], "test.gif", { type: "image/gif" })],
+          },
+        });
+        await new Promise(process.nextTick);
         // check if file input is empty +  if window alert was called
         expect(fileInput.value).toBe("");
         expect(alertMock).toHaveBeenCalled();
       });
 
-      test("Then, if it is the right format, it should upload the file", () => {
-        fireEvent.change(fileInput, { target: { files: ["test.png"] } });
-        expect(fileInput.files[0]).toBe("test.png");
+      test("Then, if it is the right format, it should upload the file", async () => {
+        fireEvent.change(fileInput, {
+          target: {
+            files: [new File(["test"], "test.png", { type: "image/png" })],
+          },
+        });
+        await new Promise(process.nextTick);
+        expect(fileInput.files[0].name).toBe("test.png");
+        expect(fileInput.files.length).toBe(1);
       });
     });
     describe("When I submit the form and fields are completed correctly", () => {
-      const type = screen.getByTestId("expense-type");
-      const name = screen.getByTestId("expense-name");
-      const amount = screen.getByTestId("amount");
-      const date = screen.getByTestId("datepicker");
-      const vat = screen.getByTestId("vat");
-      const pct = screen.getByTestId("pct");
-      const commentary = screen.getByTestId("commentary");
-      const fileInput = screen.getByTestId("file");
+      const newBill = new NewBill({
+        document,
+        onNavigate,
+        store: mockStore,
+        localStorage: window.localStorage,
+      });
+
+      // spy the bills in the store
+      // mockStore.bills() contains a mock of completed inputs for one bill
+      const spy = jest.spyOn(mockStore.bills(), "update");
+
       const form = screen.getByTestId("form-new-bill");
-
-      const handleChangeFile = jest.fn(newBill.handleChangeFile);
-      fileInput.addEventListener("change", handleChangeFile);
-
       const handleSubmit = jest.fn(newBill.handleSubmit);
       form.addEventListener("submit", handleSubmit);
 
       test("It should update the bill and navigate to the Bills Dashboard", () => {
-        // complete inputs
-        fireEvent.change(type, { target: { value: "Transport" } });
-        fireEvent.click(name, { target: { value: "Name" } });
-        fireEvent.click(amount, { target: { value: "350" } });
-        fireEvent.change(date, { target: { value: "2020-05-24" } });
-        fireEvent.click(vat, { target: { value: "" } });
-        fireEvent.click(pct, { target: { value: "20" } });
-        fireEvent.click(commentary, { target: { value: "" } });
-        fireEvent.change(fileInput, { target: { files: ["test.png"] } });
-
         // submit form
         fireEvent.submit(form);
         expect(handleSubmit).toHaveBeenCalled();
+        expect(spy).toHaveBeenCalled();
+        const table = screen.getByTestId("tbody");
+        expect(table).toBeTruthy();
       });
     });
   });
