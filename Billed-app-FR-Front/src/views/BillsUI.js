@@ -21,7 +21,6 @@ const row = (bill) => {
 
 const rows = (data) => {
   const antiChrono = (a, b) => (a.date < b.date ? 1 : -1);
-  // console.log(data);
   const bills = data ? [...data].sort(antiChrono) : [];
   return bills && bills.length ? bills.map((bill) => row(bill)).join("") : "";
 };
