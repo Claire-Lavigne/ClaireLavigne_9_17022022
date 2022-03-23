@@ -46,9 +46,7 @@ describe("Given I am connected as an employee", () => {
       expect(dates).toEqual(datesSorted);
     });
     describe("When I click on the button 'new bill'", () => {
-      test("Then I should be redirected to NewBill Page", async () => {
-        document.body.innerHTML = BillsUI({ data: { bills } });
-
+      test("Then I should be redirected to NewBill Page", () => {
         Object.defineProperty(window, "localStorage", {
           value: localStorageMock,
         });
@@ -59,6 +57,8 @@ describe("Given I am connected as an employee", () => {
             email: "employee@test.tld",
           })
         );
+
+        document.body.innerHTML = BillsUI({ data: { bills } });
 
         const onNavigate = (pathname) => {
           document.body.innerHTML = ROUTES({ pathname });
@@ -83,9 +83,6 @@ describe("Given I am connected as an employee", () => {
     });
     describe("When I click on a bill's icon eye", () => {
       test("Then a modal should open displaying the image of the corresponding bill", () => {
-        //const theBills = mockStore.bills();
-        document.body.innerHTML = BillsUI({ data: { bills } });
-
         Object.defineProperty(window, "localStorage", {
           value: localStorageMock,
         });
@@ -97,6 +94,7 @@ describe("Given I am connected as an employee", () => {
           })
         );
 
+        document.body.innerHTML = BillsUI({ data: { bills } });
         const onNavigate = (pathname) => {
           document.body.innerHTML = ROUTES({ pathname });
         };
@@ -108,20 +106,20 @@ describe("Given I am connected as an employee", () => {
           localStorage: window.localStorage,
         });
 
-        // select All
         const iconEye = screen.getAllByTestId("icon-eye");
         const handleClickIconEye = jest.fn(bill.iconEye);
-        // forEach
+
         iconEye.forEach((icon) => {
           icon.addEventListener("click", () => handleClickIconEye(icon));
         });
-        console.log(icon);
-        icon.addEventListener("click", handleClickIconEye);
+        icon.addEventListener("click", () => handleClickIconEye(icon));
 
         expect(handleClickIconEye).toHaveBeenCalled();
 
-        // get modal
-        // get file url
+        const modal = screen.getByRole("dialog");
+        expect(modal).toBeTruthy();
+        const img = screen.getByAltText("Bill");
+        expect(img).toBeTruthy();
       });
     });
   });
