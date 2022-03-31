@@ -14,6 +14,8 @@ import { localStorageMock } from "../__mocks__/localStorage.js";
 
 import router from "../app/Router.js";
 
+jest.mock("../app/store", () => mockStore);
+
 describe("Given I am connected as an employee", () => {
   describe("When I am on Bills Page", () => {
     test("Then bill icon in vertical layout should be highlighted", async () => {
@@ -34,7 +36,7 @@ describe("Given I am connected as an employee", () => {
       await waitFor(() => screen.getByTestId("icon-window"));
       const windowIcon = screen.getByTestId("icon-window");
       //to-do write expect expression
-      expect(windowIcon.classList.contains("active-icon")).toBe(true);
+      expect(windowIcon.classList.contains("active-icon")).toBeTruthy();
     });
     test("Then bills should be ordered from earliest to latest", () => {
       document.body.innerHTML = BillsUI({ data: bills });
@@ -47,7 +49,12 @@ describe("Given I am connected as an employee", () => {
       const datesSorted = [...dates].sort(antiChrono);
       expect(dates).toEqual(datesSorted);
     });
-    describe("When I click on the button 'new bill'", () => {
+  });
+});
+
+describe("Given I am connected as an employee", () => {
+  describe("When I am on Bills Page", () => {
+    describe("When I click on New Bill Button", () => {
       test("Then I should be redirected to NewBill Page", () => {
         Object.defineProperty(window, "localStorage", {
           value: localStorageMock,
@@ -56,7 +63,6 @@ describe("Given I am connected as an employee", () => {
           "user",
           JSON.stringify({
             type: "Employee",
-            email: "employee@test.tld",
           })
         );
 
@@ -97,7 +103,6 @@ describe("Given I am connected as an employee", () => {
           "user",
           JSON.stringify({
             type: "Employee",
-            email: "employee@test.tld",
           })
         );
 
@@ -129,26 +134,33 @@ describe("Given I am connected as an employee", () => {
         expect(img).toBeTruthy();
       });
     });
-    // test d'intégration GET
+  });
+});
+
+// test d'intégration GET
+describe("Given I am connected as an employee", () => {
+  describe("When I am on Bills Page", () => {
     test("fetches bills from mock API GET", async () => {
       localStorage.setItem(
         "user",
         JSON.stringify({
           type: "Employee",
+          email: "employee@test.tld",
         })
       );
       const root = document.createElement("div");
+      // vide le body
+      document.body.innerHTML = "";
       root.setAttribute("id", "root");
       document.body.append(root);
       router();
       window.onNavigate(ROUTES_PATH.Bills);
       // if bills, icon Eye in the DOM
+      await waitFor(() => screen.getByText("Mes notes de frais"));
       const iconEye = await screen.getAllByTestId("icon-eye");
       expect(iconEye[0]).toBeTruthy();
-
-      const logSpy = jest.spyOn(console, "log");
-      console.log("length");
-      expect(logSpy).toHaveBeenCalledWith("length");
+      const text = await screen.getByText("test1");
+      expect(text).toBeTruthy();
     });
     describe("When an error occurs on API", () => {
       beforeEach(() => {
@@ -177,11 +189,23 @@ describe("Given I am connected as an employee", () => {
         });
         window.onNavigate(ROUTES_PATH.Bills);
         await new Promise(process.nextTick);
-        const message = await screen.getByTestId("error-message");
+        const message = await screen.getByText(/Erreur 404/);
         expect(message).toBeTruthy();
-        const logSpy = jest.spyOn(console, "log");
-        console.log("for");
-        expect(logSpy).toHaveBeenCalledWith("for");
+      });
+
+      test("fetches messages from an API and fails with 500 message error", async () => {
+        mockStore.bills.mockImplementationOnce(() => {
+          return {
+            list: () => {
+              return Promise.reject(new Error("Erreur 500"));
+            },
+          };
+        });
+
+        window.onNavigate(ROUTES_PATH.Bills);
+        await new Promise(process.nextTick);
+        const message = await screen.getByText(/Erreur 500/);
+        expect(message).toBeTruthy();
       });
     });
   });
