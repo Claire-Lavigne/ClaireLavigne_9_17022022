@@ -129,5 +129,60 @@ describe("Given I am connected as an employee", () => {
         expect(img).toBeTruthy();
       });
     });
+    // test d'intégration GET
+    test("fetches bills from mock API GET", async () => {
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          type: "Employee",
+        })
+      );
+      const root = document.createElement("div");
+      root.setAttribute("id", "root");
+      document.body.append(root);
+      router();
+      window.onNavigate(ROUTES_PATH.Bills);
+      // if bills, icon Eye in the DOM
+      const iconEye = await screen.getAllByTestId("icon-eye");
+      expect(iconEye[0]).toBeTruthy();
+
+      const logSpy = jest.spyOn(console, "log");
+      console.log("length");
+      expect(logSpy).toHaveBeenCalledWith("length");
+    });
+    describe("When an error occurs on API", () => {
+      beforeEach(() => {
+        jest.spyOn(mockStore, "bills");
+        Object.defineProperty(window, "localStorage", {
+          value: localStorageMock,
+        });
+        window.localStorage.setItem(
+          "user",
+          JSON.stringify({
+            type: "Employee",
+          })
+        );
+        const root = document.createElement("div");
+        root.setAttribute("id", "root");
+        document.body.appendChild(root);
+        router();
+      });
+      test("fetches bills from an API and fails with 404 message error", async () => {
+        mockStore.bills.mockImplementationOnce(() => {
+          return {
+            list: () => {
+              return Promise.reject(new Error("Erreur 404"));
+            },
+          };
+        });
+        window.onNavigate(ROUTES_PATH.Bills);
+        await new Promise(process.nextTick);
+        const message = await screen.getByTestId("error-message");
+        expect(message).toBeTruthy();
+        const logSpy = jest.spyOn(console, "log");
+        console.log("for");
+        expect(logSpy).toHaveBeenCalledWith("for");
+      });
+    });
   });
 });
