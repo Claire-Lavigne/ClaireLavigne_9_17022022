@@ -84,13 +84,17 @@ describe("Given I am connected as an employee", () => {
       const handleSubmit = jest.fn(newBill.handleSubmit);
       form.addEventListener("submit", handleSubmit);
 
-      test("It should update the bill and navigate to the Bills Dashboard", () => {
+      // test d'intégration POST
+      test("It should update the bills and navigate to the Bills Dashboard", async () => {
         // submit form
         fireEvent.submit(form);
         expect(handleSubmit).toHaveBeenCalled();
         expect(spy).toHaveBeenCalled();
-        const table = screen.getByTestId("tbody");
+        // when redirect, table in DOM
+        const table = await screen.getByTestId("tbody");
         expect(table).toBeTruthy();
+
+        const logSpy = jest.spyOn(console, "error");
       });
     });
   });
