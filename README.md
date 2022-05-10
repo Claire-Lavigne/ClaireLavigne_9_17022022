@@ -1,13 +1,15 @@
 # Init Project
 
-### Back
+- Lancer 3 terminals
+
+### Back (terminal 1)
 
 - `cd Billed-app-FR-Back/`
 - `npm i`
 - `npm run run:dev` (mac) ou `npm run dev` (windows)
 - adresse de l'API : `http://localhost:5678`
 
-### Front
+### Front (terminal 2)
 
 - `cd Billed-app-FR-Front/`
 - `npm i`
@@ -31,7 +33,7 @@ utilisateur : admin@test.tld
 mot de passe : admin
 ```
 
-### Run tests
+### Run tests (terminal 3)
 
 - `cd Billed-app-FR-Front/`
 - `npm run test`
